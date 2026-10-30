@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://brunabalzer.github.io/CargaTermica/sitemap.xml

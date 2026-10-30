@@ -56,3 +56,21 @@ Exemplo de saída resumida:
 ```
 
 **Supabase pronto; próximo passo: Prompt 6.** O schema cria `calculos` e `leads` com RLS permitindo apenas INSERT para `anon`; a leitura pública fica bloqueada. `src/config.js` contém placeholders vazios para a URL e anon key. A interface registra cálculos sem bloquear a tela, abre os CTAs em modal, captura consentimento LGPD e UTM, e mantém fallback funcional quando o Supabase não está configurado.
+
+## Prompt 6 — Deploy, SEO e métricas
+
+Concluído: workflow em `.github/workflows/deploy.yml` executa `npm test` antes do GitHub Pages; `index.html` recebeu SEO básico, Open Graph e canonical; foram adicionados `og-image.png`, `sitemap.xml` e `robots.txt`; métricas e consultas estão em `docs/METRICAS.md` e `supabase/metricas.sql`; o uso local, Supabase, deploy e aviso legal estão documentados no `README.md`.
+
+## Publicação e metas
+
+- URL esperada após ativar o GitHub Pages: https://brunabalzer.github.io/CargaTermica/
+- Meta inicial: 30 cálculos.
+- Meta inicial: 3 pedidos de projeto.
+- O push para `main` deve executar os testes antes do deploy.
+
+## Próximos passos
+
+- Fazer cinco cálculos reais e comparar os resultados com o Multiplus PRO ou com contas manuais antes da divulgação.
+- Acompanhar semanalmente as consultas de `supabase/metricas.sql`.
+- Revisar coeficientes e proxy climático com engenheiro responsável.
+- Avaliar uma versão de documentação e cálculo para NR-13 no mesmo site, sem misturar seus requisitos com o cálculo de carga térmica.
