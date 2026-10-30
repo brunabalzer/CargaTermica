@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Estimativa preliminar de carga térmica pela NBR 16401 para Ponta Grossa e região.">
+  <title>Calculadora de carga térmica | Ponta Grossa</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+  <script type="module" src="./src/ui.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell">
+      <p class="eyebrow">CLIMATIZAÇÃO · PONTA GROSSA/PR</p>
+      <h1>Quantos BTUs seu ambiente precisa de verdade?</h1>
+      <p class="hero-copy">Cálculo pela NBR 16401 com o clima de Ponta Grossa, não pela regra dos 600 BTU/m².</p>
+    </div>
+  </header>
+
+  <main class="shell page-content">
+    <section class="calculator-card" aria-labelledby="form-title">
+      <div class="section-heading">
+        <p class="eyebrow">ESTIMATIVA EM 4 PASSOS</p>
+        <h2 id="form-title">Conte como é o ambiente</h2>
+        <p>Preencha os dados principais. Você pode voltar e revisar qualquer etapa antes de calcular.</p>
+      </div>
+
+      <ol class="stepper" aria-label="Etapas do formulário">
+        <li class="stepper-item is-active" data-step-indicator="1"><span>1</span><strong>Ambiente</strong></li>
+        <li class="stepper-item" data-step-indicator="2"><span>2</span><strong>Janelas</strong></li>
+        <li class="stepper-item" data-step-indicator="3"><span>3</span><strong>Envoltória</strong></li>
+        <li class="stepper-item" data-step-indicator="4"><span>4</span><strong>Uso</strong></li>
+      </ol>
+
+      <form id="calculator-form" novalidate>
+        <div class="form-error" id="form-error" role="alert" hidden></div>
+
+        <fieldset class="form-step is-active" data-step="1">
+          <legend>1. Ambiente</legend>
+          <div class="field-grid">
+            <label>
+              Tipo de uso
+              <select name="uso" required>
+                <option value="residencial">Residencial</option>
+                <option value="comercial">Sala comercial</option>
+                <option value="consultorio">Consultório</option>
+                <option value="coletivo">Uso coletivo</option>
+                <option value="publico">Uso público</option>
+              </select>
+              <small class="field-error" data-error-for="uso"></small>
+            </label>
+            <label>
+              Área do ambiente
+              <span class="input-with-unit"><input name="areaM2" type="number" min="4" max="500" step="0.1" value="30" required><span>m²</span></span>
+              <small class="field-error" data-error-for="areaM2"></small>
+            </label>
+            <label>
+              Pé-direito
+              <span class="input-with-unit"><input name="peDireitoM" type="number" min="2" max="8" step="0.1" value="2.8" required><span>m</span></span>
+              <small class="field-error" data-error-for="peDireitoM"></small>
+            </label>
+            <label>
+              Situação do ambiente
+              <select name="situacao">
+                <option value="intermediario">Pavimento intermediário</option>
+                <option value="ultimo">Último andar / sob cobertura</option>
+                <option value="terreo">Térreo</option>
+              </select>
+              <small>Usado para orientar o preenchimento da envoltória.</small>
+            </label>
+          </div>
+          <div class="form-actions"><button type="button" class="button button-primary" data-next>Continuar <span aria-hidden="true">→</span></button></div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="2" hidden>
+          <legend>2. Janelas e insolação</legend>
+          <p class="step-intro">Cadastre cada conjunto de janelas com a mesma orientação, vidro e proteção.</p>
+          <div id="windows-list" class="repeat-list"></div>
+          <button type="button" class="button button-secondary" id="add-window">+ Adicionar janela</button>
+          <div class="form-actions"><button type="button" class="button button-ghost" data-prev>Voltar</button><button type="button" class="button button-primary" data-next>Continuar <span aria-hidden="true">→</span></button></div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="3" hidden>
+          <legend>3. Paredes e cobertura</legend>
+          <div class="field-grid">
+            <label>
+              Área de paredes externas
+              <span class="input-with-unit"><input name="paredesExternasM2" type="number" min="0" max="2000" step="0.1" value="24.8" required><span>m²</span></span>
+              <small class="field-error" data-error-for="paredesExternasM2"></small>
+            </label>
+            <label>
+              Tipo de parede
+              <select name="tipoParede">
+                <option value="media">Parede média</option>
+                <option value="leve">Parede leve</option>
+                <option value="pesada">Parede pesada</option>
+              </select>
+            </label>
+            <label>
+              Área de teto/cobertura
+              <span class="input-with-unit"><input name="tetoM2" type="number" min="0" max="500" step="0.1" value="30" required><span>m²</span></span>
+              <small class="field-error" data-error-for="tetoM2"></small>
+            </label>
+            <label>
+              Tipo de cobertura
+              <select name="tipoTeto">
+                <option value="lajeSemTelhado">Laje sem telhado</option>
+                <option value="lajeComTelhado">Laje com telhado</option>
+                <option value="telhaSemForro">Telha sem forro</option>
+              </select>
+            </label>
+            <label>
+              Temperatura interna
+              <span class="input-with-unit"><input name="temperaturaC" type="number" min="16" max="30" step="0.1" value="24" required><span>°C</span></span>
+              <small class="field-error" data-error-for="temperaturaC"></small>
+            </label>
+            <label>
+              Umidade relativa
+              <span class="input-with-unit"><input name="umidadeRelativa" type="number" min="20" max="80" step="1" value="50" required><span>%</span></span>
+              <small class="field-error" data-error-for="umidadeRelativa"></small>
+            </label>
+          </div>
+          <div class="form-actions"><button type="button" class="button button-ghost" data-prev>Voltar</button><button type="button" class="button button-primary" data-next>Continuar <span aria-hidden="true">→</span></button></div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="4" hidden>
+          <legend>4. Pessoas, iluminação e equipamentos</legend>
+          <div class="field-grid">
+            <label>
+              Pessoas no ambiente
+              <input name="quantidadePessoas" type="number" min="0" max="500" step="1" value="5" required>
+              <small class="field-error" data-error-for="quantidadePessoas"></small>
+            </label>
+            <label>
+              Nível de atividade
+              <select name="atividade">
+                <option value="escritorio">Sentado / escritório</option>
+                <option value="atividadeLeve">Atividade leve</option>
+                <option value="academia">Academia</option>
+              </select>
+            </label>
+            <label>
+              Iluminação instalada
+              <span class="input-with-unit"><input name="wPorM2" type="number" min="0" max="500" step="0.1" value="10" required><span>W/m²</span></span>
+              <small class="field-error" data-error-for="wPorM2"></small>
+            </label>
+            <label>
+              Infiltração
+              <span class="input-with-unit"><input name="infiltracaoACH" type="number" min="0" max="20" step="0.1" value="0.5" required><span>ACH</span></span>
+            </label>
+          </div>
+          <div class="equipment-heading"><h3>Equipamentos</h3><span>Potências típicas editáveis</span></div>
+          <div class="equipment-grid">
+            <label class="check-card"><input type="checkbox" name="equipment" value="computador"><span><strong>Computador</strong><small>120 W por unidade</small></span><input type="number" name="qty-computador" value="1" min="1" max="500" aria-label="Quantidade de computadores"></label>
+            <label class="check-card"><input type="checkbox" name="equipment" value="tv"><span><strong>TV</strong><small>100 W por unidade</small></span><input type="number" name="qty-tv" value="1" min="1" max="500" aria-label="Quantidade de TVs"></label>
+            <label class="check-card"><input type="checkbox" name="equipment" value="geladeira"><span><strong>Geladeira</strong><small>150 W por unidade</small></span><input type="number" name="qty-geladeira" value="1" min="1" max="500" aria-label="Quantidade de geladeiras"></label>
+            <label class="check-card"><input type="checkbox" name="equipment" value="forno"><span><strong>Forno</strong><small>1.500 W por unidade</small></span><input type="number" name="qty-forno" value="1" min="1" max="500" aria-label="Quantidade de fornos"></label>
+          </div>
+          <label class="other-equipment">Outro equipamento (opcional)
+            <span class="input-row"><input name="outroNome" type="text" placeholder="Ex.: impressora"><input name="outroPotenciaW" type="number" min="0" max="100000" step="1" placeholder="Potência W" aria-label="Potência do outro equipamento"><input name="outroQuantidade" type="number" min="1" max="500" value="1" aria-label="Quantidade do outro equipamento"></span>
+          </label>
+          <div class="advanced-grid">
+            <label>Renovação por pessoa <span class="input-with-unit"><input name="renovacaoLpsPessoa" type="number" min="0" max="100" step="0.1" value="7" required><span>L/s</span></span></label>
+            <label>Renovação por área <span class="input-with-unit"><input name="renovacaoLpsM2" type="number" min="0" max="20" step="0.1" value="0.4" required><span>L/s·m²</span></span></label>
+            <label>Margem de segurança <span class="input-with-unit"><input name="fatorSeguranca" type="number" min="0" max="30" step="1" value="10" required><span>%</span></span></label>
+          </div>
+          <div class="form-actions"><button type="button" class="button button-ghost" data-prev>Voltar</button><button type="submit" class="button button-primary">Calcular carga térmica</button></div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section id="results" class="results" aria-labelledby="results-title" hidden>
+      <div class="result-hero">
+        <p class="eyebrow">ESTIMATIVA DE PROJETO</p>
+        <h2 id="results-title">Sua carga estimada</h2>
+        <strong id="total-btuh" class="total-number">—</strong>
+        <span>BTU/h de capacidade de resfriamento</span>
+        <p id="result-context" class="result-context"></p>
+      </div>
+      <div class="result-grid">
+        <article class="result-card highlight"><span>Capacidade comercial sugerida</span><strong id="suggested-capacity">—</strong><small>próxima capacidade acima da carga calculada</small></article>
+        <article class="result-card"><span>Em kW térmico</span><strong id="total-kw">—</strong><small id="total-tr">— TR</small></article>
+      </div>
+      <article class="result-card chart-card"><h3>Composição da carga</h3><div id="component-chart" class="component-chart"></div></article>
+      <article class="result-card comparison"><h3>Regra dos 600 BTU/m²</h3><p id="comparison-text"></p><p id="comparison-risk" class="risk-copy"></p></article>
+      <div id="notices" class="notice-list"></div>
+      <p class="legal-notice"><strong>Aviso legal:</strong> Estimativa preliminar. Não substitui projeto de climatização com ART.</p>
+      <div class="cta-row"><button type="button" id="project-cta" class="button button-primary">Quero projeto com engenheiro responsável</button><button type="button" id="pmoc-cta" class="button button-secondary">Preciso de PMOC?</button><button type="button" id="download-pdf" class="button button-ghost">Baixar PDF</button></div>
+      <button type="button" id="new-calculation" class="link-button">Refazer cálculo</button>
+    </section>
+  </main>
+  <dialog id="lead-modal" class="lead-modal" aria-labelledby="lead-title">
+    <form id="lead-form" method="dialog">
+      <button type="button" class="modal-close" id="close-lead-modal" aria-label="Fechar">×</button>
+      <p class="eyebrow">FALE COM A GENTE</p>
+      <h2 id="lead-title">Receba orientação para o seu ambiente</h2>
+      <p id="lead-intro" class="modal-intro"></p>
+      <label>Nome<input name="nome" required autocomplete="name"></label>
+      <label>WhatsApp<input name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="(42) 99999-9999"></label>
+      <label>E-mail <small>(opcional)</small><input name="email" type="email" autocomplete="email"></label>
+      <label>Cidade<input name="cidade" value="Ponta Grossa" required autocomplete="address-level2"></label>
+      <label class="consent-label"><input name="consentimento" type="checkbox" required><span>Autorizo o contato para orçamento conforme a <a href="./privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
+      <p id="lead-error" class="form-error" hidden role="alert"></p>
+      <button type="submit" class="button button-primary">Enviar pedido</button>
+    </form>
+    <div id="lead-success" class="lead-success" hidden>
+      <h2>Pedido recebido</h2>
+      <p>Obrigado. Em breve entraremos em contato.</p>
+      <a id="whatsapp-now" class="button button-primary" target="_blank" rel="noopener">Falar no WhatsApp agora</a>
+    </div>
+  </dialog>
+  <footer class="site-footer"><div class="shell">Ferramenta de estimativa técnica · Dados climáticos regionais provisórios · 2026</div></footer>
+</body>
+</html>
